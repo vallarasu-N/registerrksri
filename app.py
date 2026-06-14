@@ -12,14 +12,12 @@ app = Flask(__name__)
 database_url = os.environ.get("DATABASE_URL")
 
 if database_url:
-    # Render PostgreSQL
     app.config["SQLALCHEMY_DATABASE_URI"] = database_url.replace(
         "postgres://",
         "postgresql://",
         1
     )
 else:
-    # Local PostgreSQL
     app.config["SQLALCHEMY_DATABASE_URI"] = (
         "postgresql://postgres:postgres@localhost/infx_db"
     )
@@ -30,11 +28,11 @@ db = SQLAlchemy(app)
 CORS(app)
 
 # ---------------------------
-# User Model
+# Table: rithishree
 # ---------------------------
 
 class User(db.Model):
-    __tablename__ = "users"
+    __tablename__ = "rithishree"
 
     id = db.Column(db.Integer, primary_key=True)
     fullname = db.Column(db.String(100), nullable=False)
@@ -45,19 +43,23 @@ class User(db.Model):
         return f"<User {self.email}>"
 
 # ---------------------------
-# Create Tables
+# Create Table
 # ---------------------------
 
 with app.app_context():
     db.create_all()
 
 # ---------------------------
-# Routes
+# Home Route
 # ---------------------------
 
 @app.route("/")
 def home():
     return render_template("index.html")
+
+# ---------------------------
+# Registration Route
+# ---------------------------
 
 @app.route("/register", methods=["POST"])
 def register():
@@ -82,13 +84,13 @@ def register():
                 "message": "Email already exists"
             }), 400
 
-        user = User(
+        new_user = User(
             fullname=fullname,
             email=email,
             password=password
         )
 
-        db.session.add(user)
+        db.session.add(new_user)
         db.session.commit()
 
         return jsonify({
@@ -103,6 +105,25 @@ def register():
             "success": False,
             "message": str(e)
         }), 500
+
+# ---------------------------
+# Show All Records (Optional)
+# ---------------------------
+
+@app.route("/users")
+def get_users():
+    users = User.query.all()
+
+    data = []
+
+    for user in users:
+        data.append({
+            "id": user.id,
+            "fullname": user.fullname,
+            "email": user.email
+        })
+
+    return jsonify(data)
 
 # ---------------------------
 # Run App
